@@ -1,0 +1,5 @@
+doc/
+keil/*
+!keil/*.uvproj
+output/
+si/
