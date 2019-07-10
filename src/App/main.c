@@ -18,6 +18,10 @@
 #include "usb_lib.h"
 #include "usb_pwr.h"
 #include <stdio.h>
+#include <string.h>
+
+#include "FreeRTOS.h"
+#include "task.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -27,6 +31,7 @@
 __IO uint8_t PrevXferComplete = 1;
 __IO uint8_t usbReceived = 0;
 uint8_t Send_Buffer[64];
+const char welcome[20]= "hello world.\n";
 /*******************************************************************************
 * Function Name  : Set_USB_GPIO
 * Description    : 
@@ -60,6 +65,60 @@ void Set_USB_GPIO(void)
     //GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
     GPIO_Init(GPIOD, &GPIO_InitStructure);
 }
+
+/**
+  * @brief  Main program.
+  * @param  None
+  * @retval None
+  */
+void vTestGpio_Init(void)
+{
+
+ GPIO_InitTypeDef  GPIO_InitStructure;
+
+ RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);  //使能PB,PE端口时钟
+
+ GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;               //LED0-->PB.5 端口配置
+ GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;        //推挽输出
+ GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;       //IO口速度为50MHz
+ GPIO_Init(GPIOC, &GPIO_InitStructure);                  //根据设定参数初始化GPIOB.5
+ GPIO_SetBits(GPIOC,GPIO_Pin_0);                         //PB.5 输出高
+}
+/**
+  * @brief  .
+  * @param  None
+  * @retval None
+  */
+void vSetTestGpio(BaseType_t xData)
+{
+    if (xData == pdTRUE)
+    {
+        GPIO_SetBits(GPIOC,GPIO_Pin_0);
+    }
+    else if (xData == pdFALSE)
+    {
+        GPIO_ResetBits(GPIOC,GPIO_Pin_0);
+    }
+}
+/**
+  * @brief  Main program.
+  * @param  None
+  * @retval None
+  */
+void vTestTask (void *pvPrameters)
+{
+    uint32_t ulCnt = 0;
+    for (;;)
+    {
+        vSetTestGpio(pdFALSE);
+        vTaskDelay(pdMS_TO_TICKS(500));
+        vSetTestGpio(pdTRUE);
+        vTaskDelay(pdMS_TO_TICKS(500));
+        //UART_SendByInterrupt((uint8_t *)welcome, strlen(welcome));
+        printf(" %d\n", ulCnt);
+        ulCnt++;
+    }
+}
 /**
   * @brief  Main program.
   * @param  None
@@ -73,24 +132,35 @@ int main(void)
     To reconfigure the default setting of SystemInit() function, refer to
     system_stm32f10x.c file
     */
-
+    vTestGpio_Init();
+    NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
     UART_Configuration();
+    //UART_SendByInterrupt((uint8_t *)welcome, strlen(welcome));
+//    Delay_Configuariton();
 
-    Delay_Configuariton();
+//    Set_USB_GPIO();
 
-    Set_USB_GPIO();
+//    USB_Interrupts_Config();
 
-    USB_Interrupts_Config();
+//    Set_USBClock();
 
-    Set_USBClock();
+//    USB_Init();
 
-    USB_Init();
+    //Delay(1000);
 
-    Delay(1000);
+    //UART_SendByInterrupt((uint8_t *)welcome, strlen(welcome));
+    //printf("start\n");
 
-    //UART_SendByInterrupt(au8Str, sizeof(au8Str));
-    printf(" hello like!\n");
+    xTaskCreate(vTestTask, "my1stTask", 1000, NULL, 3, NULL);
 
+    //printf("tasked\n");
+
+    vTaskStartScheduler();          //开启任务调度
+
+    //printf("scheduler failed\n");
+
+    for (;;);
+#if 0
     /* Infinite loop */
     while (1)
     {
@@ -107,6 +177,7 @@ int main(void)
         }
         Delay(10);
     }
+#endif
 }
 
 #ifdef  USE_FULL_ASSERT
