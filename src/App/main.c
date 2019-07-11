@@ -133,31 +133,23 @@ int main(void)
     system_stm32f10x.c file
     */
     vTestGpio_Init();
-    NVIC_PriorityGroupConfig( NVIC_PriorityGroup_4 );
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
     UART_Configuration();
-    //UART_SendByInterrupt((uint8_t *)welcome, strlen(welcome));
-//    Delay_Configuariton();
 
-//    Set_USB_GPIO();
+    Set_USB_GPIO();
 
-//    USB_Interrupts_Config();
+    USB_Interrupts_Config();
 
-//    Set_USBClock();
+    Set_USBClock();
 
-//    USB_Init();
+    USB_Init();
 
-    //Delay(1000);
-
-    //UART_SendByInterrupt((uint8_t *)welcome, strlen(welcome));
-    //printf("start\n");
 
     xTaskCreate(vTestTask, "my1stTask", 1000, NULL, 3, NULL);
 
-    //printf("tasked\n");
 
     vTaskStartScheduler();          //开启任务调度
 
-    //printf("scheduler failed\n");
 
     for (;;);
 #if 0

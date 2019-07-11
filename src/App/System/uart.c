@@ -128,11 +128,50 @@ void UART_Configuration(void)
 }
 
 /**
-  * @}
+  * @brief  
+  * @param  None
+  * @retval None
   */
+void USART1_IRQHandler(void)
+{
+    
+    if (USART_GetFlagStatus(USART1, USART_FLAG_PE) != RESET)
+    {
+        USART_ReceiveData(USART1);
+        USART_ClearFlag(USART1, USART_FLAG_PE);
+    }
 
-/**
-  * @}
-  */
+    if (USART_GetFlagStatus(USART1, USART_FLAG_ORE) != RESET)
+    {
+        USART_ReceiveData(USART1);
+        USART_ClearFlag(USART1, USART_FLAG_ORE);
+    }
+
+    if (USART_GetFlagStatus(USART1, USART_FLAG_FE) != RESET)
+    {
+        USART_ReceiveData(USART1);
+        USART_ClearFlag(USART1, USART_FLAG_FE);
+    }
+
+    if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+    {   
+        USART_ClearFlag(USART1, USART_FLAG_RXNE);
+        USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+        g_u32UartRxBuf[g_u32RxCnt++] = USART_ReceiveData(USART1);
+    }
+
+    if(USART_GetITStatus(USART1, USART_IT_TXE) != RESET)
+    {
+        /* Write one byte to the transmit data register */
+        if (g_u32SentCnt < g_u32TxCnt)
+        {
+          USART_SendData(USART1, g_u32UartTxBuf[g_u32SentCnt++]);
+        }
+        else
+        {
+            USART_ITConfig(USART1, USART_IT_TXE, DISABLE);
+        }
+    }
+}
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
