@@ -37,8 +37,6 @@
 
 
 /* Includes ------------------------------------------------------------------*/
-
-#include "hw_config.h" 
 #include "usb_lib.h"
 #include "usb_conf.h"
 #include "usb_prop.h"

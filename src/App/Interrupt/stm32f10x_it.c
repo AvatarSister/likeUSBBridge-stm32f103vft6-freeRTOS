@@ -23,10 +23,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f10x_it.h"
-#include "delay.h"
 #include "usb_istr.h"
-#include "usb_lib.h"
-#include "usb_pwr.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -138,7 +135,25 @@ void PendSV_Handler(void)
   */
 void SysTick_Handler(void)
 {
-    TimingDelay_Decrement();
+}
+
+/**
+  * @brief  
+  * @param  None
+  * @retval None
+  */
+void EXTI9_5_IRQHandler(void)
+{
+    extern volatile uint8_t touchInterrupFlag;
+
+    if(EXTI_GetITStatus(EXTI_Line5) != RESET)
+    {
+        touchInterrupFlag = 1;
+        /* Clear the  EXTI line 9 pending bit */
+        EXTI_ClearITPendingBit(EXTI_Line5);
+    }
+
+    
 }
 
 /*******************************************************************************

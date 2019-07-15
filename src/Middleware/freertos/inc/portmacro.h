@@ -44,11 +44,11 @@ extern "C" {
  */
 
 /* Type definitions. */
-#define portCHAR		char
-#define portFLOAT		float
-#define portDOUBLE		double
-#define portLONG		long
-#define portSHORT		short
+#define portCHAR		char         //1Byte
+#define portFLOAT		float        //4Byte=int
+#define portDOUBLE		double       //8Byte
+#define portLONG		long         //4Byte=int
+#define portSHORT		short        //2Byte
 #define portSTACK_TYPE	uint32_t
 #define portBASE_TYPE	long
 

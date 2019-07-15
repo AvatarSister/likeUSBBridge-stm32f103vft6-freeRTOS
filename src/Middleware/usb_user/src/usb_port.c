@@ -1,43 +1,19 @@
 /**
   ******************************************************************************
-  * @file    hw_config.c
-  * @author  MCD Application Team
-  * @version V4.1.0
-  * @date    26-May-2017
-  * @brief   Hardware Configuration & Setup
+  * @file    usb_port.c
+  * @author  like
+  * @version 
+  * @date    12-07-2019
+  * @brief   usb Hardware Configuration & Setup
   ******************************************************************************
   * @attention
   *
-  * <h2><center>&copy; COPYRIGHT(c) 2017 STMicroelectronics</center></h2>
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
   *
   ******************************************************************************
   */
 
 
 /* Includes ------------------------------------------------------------------*/
-#include "hw_config.h"
 #include "usb_lib.h"
 #include "usb_desc.h"
 #include "usb_pwr.h"
@@ -46,16 +22,36 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-
-ErrorStatus HSEStartUpStatus;
-uint32_t ADC_ConvertedValueX = 0;
-uint32_t ADC_ConvertedValueX_1 = 0;
-__IO uint16_t  ADC1ConvertedValue = 0, ADC1ConvertedVoltage = 0, calibration_value = 0;
-
 /* Extern variables ----------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
-static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len);
 /* Private functions ---------------------------------------------------------*/
+/*******************************************************************************
+* Function Name  : HexToChar.
+* Description    : Convert Hex 32Bits value into char.
+* Input          : None.
+* Output         : None.
+* Return         : None.
+*******************************************************************************/
+static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len)
+{
+  uint8_t idx = 0;
+  
+  for( idx = 0 ; idx < len ; idx ++)
+  {
+    if( ((value >> 28)) < 0xA )
+    {
+      pbuf[ 2* idx] = (value >> 28) + '0';
+    }
+    else
+    {
+      pbuf[2* idx] = (value >> 28) + 'A' - 10; 
+    }
+    
+    value = value << 4;
+    
+    pbuf[ 2* idx + 1] = 0;
+  }
+}
 
 /*******************************************************************************
 * Function Name  : Set_USBClock
@@ -105,14 +101,14 @@ void Leave_LowPowerMode(void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void USB_Interrupts_Config(void)
+void USB_Interrupts_Config(uint8_t PreemptionPriotiry, uint8_t SubPriority)
 {
   NVIC_InitTypeDef NVIC_InitStructure; 
 
   /* Enable the USB interrupt */
   NVIC_InitStructure.NVIC_IRQChannel = USB_LP_CAN1_RX0_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 13;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = PreemptionPriotiry;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = SubPriority;
   NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
   NVIC_Init(&NVIC_InitStructure);
 }
@@ -128,12 +124,46 @@ void USB_Cable_Config (FunctionalState NewState)
 { 
   if (NewState != DISABLE)
   {
-    GPIO_ResetBits(GPIOD, GPIO_Pin_3);
+    GPIO_ResetBits(GPIOx_DISCONNECT, GPIO_PIN_x_DISCONNECT);
   }
   else
   {
-    GPIO_SetBits(GPIOD, GPIO_Pin_3);
+    GPIO_SetBits(GPIOx_DISCONNECT, GPIO_PIN_x_DISCONNECT);
   }
+}
+
+/*******************************************************************************
+* Function Name  : Set_USB_GPIO
+* Description    : 
+* Input          : None.
+* Return         : None.
+*******************************************************************************/
+void Set_USB_GPIO(void)
+{
+    GPIO_InitTypeDef  GPIO_InitStructure;  
+    /*!< At this stage the microcontroller clock setting is already configured, 
+       this is done through SystemInit() function which is called from startup
+       file (startup_stm32xxx.s) before to branch to application main.
+       To reconfigure the default setting of SystemInit() function, refer to
+       system_stm32xxx.c file
+    */
+    RCC_APB2PeriphClockCmd(RCC_APBxPeriph_GPIO_DM_DP, ENABLE);
+
+    /********************************************/
+    /*  Configure USB DM/DP pins                */
+    /********************************************/
+    GPIO_InitStructure.GPIO_Pin = GPIO_PIN_x_DM | GPIO_PIN_x_DP;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOx_DM_DP, &GPIO_InitStructure);
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIO_DISCONNECT, ENABLE);
+
+    GPIO_InitStructure.GPIO_Pin = GPIO_PIN_x_DISCONNECT;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_OD;
+    //GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_Init(GPIOx_DISCONNECT, &GPIO_InitStructure);
 }
 
 /*******************************************************************************
@@ -168,33 +198,15 @@ void Get_SerialNum(void)
   }
 }
 
-/*******************************************************************************
-* Function Name  : HexToChar.
-* Description    : Convert Hex 32Bits value into char.
-* Input          : None.
-* Output         : None.
-* Return         : None.
-*******************************************************************************/
-static void IntToUnicode (uint32_t value , uint8_t *pbuf , uint8_t len)
+void portUSBInit(uint8_t PreemptionPriotiry, uint8_t SubPriority)
 {
-  uint8_t idx = 0;
-  
-  for( idx = 0 ; idx < len ; idx ++)
-  {
-    if( ((value >> 28)) < 0xA )
-    {
-      pbuf[ 2* idx] = (value >> 28) + '0';
-    }
-    else
-    {
-      pbuf[2* idx] = (value >> 28) + 'A' - 10; 
-    }
-    
-    value = value << 4;
-    
-    pbuf[ 2* idx + 1] = 0;
-  }
-}
+    Set_USB_GPIO();
 
+    USB_Interrupts_Config(PreemptionPriotiry, SubPriority);
+
+    Set_USBClock();
+
+    USB_Init();
+}
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

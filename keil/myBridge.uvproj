@@ -659,6 +659,11 @@
               <FileType>1</FileType>
               <FilePath>..\src\Middleware\usb_user\src\usb_pwr.c</FilePath>
             </File>
+            <File>
+              <FileName>usb_port.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\Middleware\usb_user\src\usb_port.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -696,11 +701,6 @@
               <FileName>main.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\src\App\main.c</FilePath>
-            </File>
-            <File>
-              <FileName>hw_config.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\src\App\hw_config.c</FilePath>
             </File>
           </Files>
         </Group>
