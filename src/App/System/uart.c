@@ -1,10 +1,10 @@
 /**
   ******************************************************************************
-  * @file    SysTick/TimeBase/main.c 
-  * @author  MCD Application Team
-  * @version V3.5.0
-  * @date    08-April-2011
-  * @brief   Main program body.
+  * @file    
+  * @author  
+  * @version 
+  * @date    
+  * @brief   
   ******************************************************************************
   * @attention
   *

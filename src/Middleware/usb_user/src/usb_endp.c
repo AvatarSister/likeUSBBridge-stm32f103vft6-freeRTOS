@@ -48,6 +48,7 @@ uint8_t Receive_Buffer[64];
 extern __IO uint8_t PrevXferComplete;
 extern __IO uint8_t usbReceived ;
 extern uint8_t Send_Buffer[];
+extern int ReceivedLen;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 /*******************************************************************************
@@ -59,11 +60,8 @@ extern uint8_t Send_Buffer[];
 *******************************************************************************/
 void EP1_OUT_Callback(void)
 {
-  /* Read received data (2 bytes) */  
-  Send_Buffer[0] = USB_SIL_Read(EP1_OUT, Receive_Buffer);
+  ReceivedLen = USB_SIL_Read(EP1_OUT, Receive_Buffer);
   
-  Send_Buffer[2] = Receive_Buffer[1];
-  Send_Buffer[3] = Receive_Buffer[0];
   usbReceived = 1;
 
   SetEPRxStatus(ENDP1, EP_RX_VALID);

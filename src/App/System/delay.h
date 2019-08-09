@@ -29,8 +29,7 @@
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void Delay(__IO uint32_t nTime);
-void TimingDelay_Decrement(void);
+void DelayUs(__IO uint16_t nTime);
 void Delay_Configuariton(void);
 
 #endif /* __DELAY_H */

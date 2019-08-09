@@ -689,10 +689,22 @@
               <FileType>1</FileType>
               <FilePath>..\src\App\System\uart.c</FilePath>
             </File>
+            <File>
+              <FileName>spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\App\System\spi.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
           <GroupName>App/Comm</GroupName>
+          <Files>
+            <File>
+              <FileName>interface_spi.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\src\App\Comm\interface_spi.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>App</GroupName>

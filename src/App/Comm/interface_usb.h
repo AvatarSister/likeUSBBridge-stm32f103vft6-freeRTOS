@@ -11,19 +11,30 @@
   */ 
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __UART_H
-#define __UART_H
+#ifndef __INTERFACE_USB_H
+#define __INTERFACE_USB_H
 
 /* Includes ------------------------------------------------------------------*/
-
 /* Exported types ------------------------------------------------------------*/
+#ifndef NULL
+#define NULL ((void *)0)
+#endif
+
+#ifndef true
+#define true      1
+#endif
+
+#ifndef false
+#define false     0
+#endif
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
+
 /* Exported functions ------------------------------------------------------- */
-void UART_Configuration(void);
-void UART_SendByInterrupt(uint8_t *pBuff, uint32_t u32Len);
+
+void vTaskUsbInterface (void *pvPrameters);
+void vInterfaceUsbInit(void);
 
 
-#endif /* __UART_H */
+#endif /* __INTERFACE_USB_H */
 
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

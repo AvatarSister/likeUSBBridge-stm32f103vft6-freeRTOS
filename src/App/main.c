@@ -1,4 +1,4 @@
-/**
+ /**
   ******************************************************************************
   * @file    main.c 
   * @author  LIKE
@@ -14,6 +14,7 @@
 #include "stm32f10x.h"
 #include "delay.h"
 #include "uart.h"
+#include "spi.h"
 #include "usb_port.h"
 #include "usb_lib.h"
 #include "usb_pwr.h"
@@ -22,6 +23,12 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "semphr.h"
+
+
+#include "interface_spi.h"
+#include "interface_usb.h"
+#include "siu2.h"
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
@@ -31,79 +38,23 @@
 __IO uint8_t PrevXferComplete = 1;
 __IO uint8_t usbReceived = 0;
 uint8_t Send_Buffer[64];
+int ReceivedLen;
 const char welcome[20]= "hello world.\n";
 
 volatile uint8_t touchInterrupFlag = FALSE;
-/*******************************************************************************
-* Function Name  : Set_USB_GPIO
-* Description    : 
-* Input          : None.
-* Return         : None.
-*******************************************************************************/
 
-/**
-  * @brief  Main program.
-  * @param  None
-  * @retval None
-  */
-void vPowerOnForSIU2(void)
+uint8_t SPI_ReceiveBuffer[64];
+uint16_t SPI_ReceiveCnt;
+
+
+SemaphoreHandle_t xMutexPrintf;
+
+
+void vToggleGPIOPin(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 {
-    GPIO_InitTypeDef  GPIO_InitStructure;
-
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
-
-    GPIO_SetBits(GPIOA,GPIO_Pin_0);
-    GPIO_SetBits(GPIOA,GPIO_Pin_1);
-    GPIO_SetBits(GPIOA,GPIO_Pin_2);
+    GPIO_WriteBit(GPIOx, GPIO_Pin, (BitAction)(1 - GPIO_ReadOutputDataBit(GPIOx, GPIO_Pin)));
 }
 
-/**
-  * @brief  Main program.
-  * @param  None
-  * @retval None
-  */
-void vTestGpio_Init(void)
-{
-
- GPIO_InitTypeDef  GPIO_InitStructure;
-
- RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);  //使能PB,PE端口时钟
-
- GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;               //LED0-->PB.5 端口配置
- GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;        //推挽输出
- GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;       //IO口速度为50MHz
- GPIO_Init(GPIOC, &GPIO_InitStructure);                  //根据设定参数初始化GPIOB.5
- GPIO_SetBits(GPIOC,GPIO_Pin_0);                         //PB.5 输出高
-}
-/**
-  * @brief  .
-  * @param  None
-  * @retval None
-  */
-void vSetTestGpio(BaseType_t xData)
-{
-    if (xData == pdTRUE)
-    {
-        GPIO_SetBits(GPIOC,GPIO_Pin_0);
-    }
-    else if (xData == pdFALSE)
-    {
-        GPIO_ResetBits(GPIOC,GPIO_Pin_0);
-    }
-}
 /**
   * @brief  Main program.
   * @param  None
@@ -111,7 +62,9 @@ void vSetTestGpio(BaseType_t xData)
   */
 void vTestTask (void *pvPrameters)
 {
+#if 0
     uint32_t ulCnt = 0;
+
     for (;;)
     {
         if ((ulCnt & 0x03) == 0x03)
@@ -131,43 +84,28 @@ void vTestTask (void *pvPrameters)
         }
         ulCnt++;
     }
-}
+#else
+    int ret;
+    for (;;)
+    {
+        if (touchInterrupFlag)
+        {
+            touchInterrupFlag = FALSE;
+            printf("Touch Interrupt.\n");
+            ret = SPI_Read_BootId(SPI_ReceiveBuffer, 2);
+            if (ret == SPI_OK)
+            {
+                printf("Boot id: %02X%02X\n",SPI_ReceiveBuffer[0],SPI_ReceiveBuffer[1]);
+            }
+            else
+            {
+                printf("Read boot id fail. [%d]\n",ret);
+            }
 
-/**
-  * @brief  Configure PB5 in interrupt mode
-  * @param  None
-  * @retval None
-  */
-void TouchInterruptInit(void)
-{
-    EXTI_InitTypeDef   EXTI_InitStructure;
-    GPIO_InitTypeDef   GPIO_InitStructure;
-    NVIC_InitTypeDef   NVIC_InitStructure;
-    /* Enable GPIOA clock */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
-
-    /* Configure PA.00 pin as input floating */
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN_FLOATING;
-    GPIO_Init(GPIOB, &GPIO_InitStructure);
-
-    /* Enable AFIO clock */
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
-
-    GPIO_EXTILineConfig(GPIO_PortSourceGPIOB, GPIO_PinSource5);
-
-    /* Configure EXTI0 line */
-    EXTI_InitStructure.EXTI_Line = EXTI_Line5;
-    EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-    EXTI_InitStructure.EXTI_LineCmd = ENABLE;
-    EXTI_Init(&EXTI_InitStructure);
-
-    NVIC_InitStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
-    NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 12;
-    NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-    NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-    NVIC_Init(&NVIC_InitStructure);
+        }
+    }
+    
+#endif
 }
 
 /**
@@ -175,41 +113,25 @@ void TouchInterruptInit(void)
   * @param  None
   * @retval None
   */
+  
 int main(void)
 {
     //SCB->VTOR 用于重定向vector, 做bootloader时必备
-    vPowerOnForSIU2();
-    vTestGpio_Init();
+    int ret;
+    SIU2_Init();
+    Delay_Configuariton();
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+
+    xMutexPrintf = xSemaphoreCreateMutex();
+    vInterfaceUsbInit();
+    
     UART_Configuration();
-    TouchInterruptInit();
+    SPI2Init();
     portUSBInit(13, 0);
-
-    xTaskCreate(vTestTask, "my1stTask", 1000, NULL, 3, NULL);
-
-
+    xTaskCreate(vTaskUsbInterface, "UsbInterface", 1000, NULL, 3, NULL);
     vTaskStartScheduler();          //开启任务调度
-
-
     for (;;);
-#if 0
-    /* Infinite loop */
-    while (1)
-    {
-        
-        if ((PrevXferComplete) && (bDeviceState == CONFIGURED) && (usbReceived))
-        {
-          /* Write the descriptor through the endpoint */    
-          USB_SIL_Write(EP1_IN, (uint8_t*) Send_Buffer, 64);  
-         
-          SetEPTxValid(ENDP1);
 
-          PrevXferComplete = 0;
-          usbReceived = 0;
-        }
-        Delay(10);
-    }
-#endif
 }
 
 #ifdef  USE_FULL_ASSERT

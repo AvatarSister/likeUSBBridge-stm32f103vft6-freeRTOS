@@ -11,19 +11,16 @@
   */ 
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __UART_H
-#define __UART_H
+#ifndef __SIU2_H
+#define __SIU2_H
 
 /* Includes ------------------------------------------------------------------*/
-
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
-/* Exported functions ------------------------------------------------------- */
-void UART_Configuration(void);
-void UART_SendByInterrupt(uint8_t *pBuff, uint32_t u32Len);
 
+void SIU2_Init(void);
+void SET_TP_RESET_PIN(int     val);
 
-#endif /* __UART_H */
+#endif /* __SIU2_H */
 
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/

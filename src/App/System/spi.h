@@ -11,19 +11,31 @@
   */ 
 
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __UART_H
-#define __UART_H
+#ifndef __SPI_H
+#define __SPI_H
 
 /* Includes ------------------------------------------------------------------*/
-
+#include "stm32f10x.h"
 /* Exported types ------------------------------------------------------------*/
 /* Exported constants --------------------------------------------------------*/
 /* Exported macro ------------------------------------------------------------*/
 /* Exported functions ------------------------------------------------------- */
-void UART_Configuration(void);
-void UART_SendByInterrupt(uint8_t *pBuff, uint32_t u32Len);
+
+#define SPI2_CLOCK          RCC_APB1Periph_SPI2
+#define SPI2_GPIO_GROUP     GPIOB
+#define SPI2_GPIO_CLOCK     RCC_APB2Periph_GPIOB
+#define SPI2_PIN_NSS        GPIO_Pin_12
+#define SPI2_PIN_SCK        GPIO_Pin_13
+#define SPI2_PIN_MISO       GPIO_Pin_14
+#define SPI2_PIN_MOSI       GPIO_Pin_15
 
 
-#endif /* __UART_H */
+void SPI2Init(void);
+uint16_t SPI2_SendAndRead(uint16_t data);
+void SPI2_CS_LOW(void);
+void SPI2_CS_HIGH(void);
 
-/******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
+
+
+#endif /* __SPI_H */
+

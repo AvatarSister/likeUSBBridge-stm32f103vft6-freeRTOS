@@ -202,13 +202,14 @@ void CustomHID_Reset(void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
+extern void vSetDeviceStateConfiguredFromISR(void);
 void CustomHID_SetConfiguration(void)
 {
   if (pInformation->Current_Configuration != 0)
   {
     /* Device configured */
-    bDeviceState = CONFIGURED;
-    
+    //bDeviceState = CONFIGURED;
+    vSetDeviceStateConfiguredFromISR();
     //ADC_SoftwareStartConvCmd(ADC1, ENABLE);
   }
 }
