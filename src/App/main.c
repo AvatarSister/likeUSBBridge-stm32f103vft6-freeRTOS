@@ -117,7 +117,6 @@ void vTestTask (void *pvPrameters)
 int main(void)
 {
     //SCB->VTOR 用于重定向vector, 做bootloader时必备
-    int ret;
     SIU2_Init();
     Delay_Configuariton();
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
