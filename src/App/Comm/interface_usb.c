@@ -12,6 +12,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdio.h>
+#include <string.h>
 
 #include "stm32f10x.h"
 #include "usb_lib.h"
@@ -70,6 +71,7 @@ void vTaskUsbInterface (void *pvPrameters)
         {
             if ((PrevXferComplete) && (usbReceived))
             {
+                memset(Send_Buffer,0,64);
                 Send_Buffer[0] = 0x55;
                 switch (Receive_Buffer[0])
                 {
@@ -87,6 +89,17 @@ void vTaskUsbInterface (void *pvPrameters)
                             xSemaphoreGive(xMutexPrintf);
                             Send_Buffer[0] = 0xAA;
                         }
+                        break;
+                    case 0x03:
+                        SPI_WriteAndRead_Direct(Receive_Buffer[1],NULL,NULL,0);
+                        Send_Buffer[0] = 0xAA;
+                        Send_Buffer[1] = Receive_Buffer[1];
+                        break;
+                    case 0x04:
+                        SPI_WriteAndRead_Direct(Receive_Buffer[1],&Receive_Buffer[2],NULL,1);
+                        Send_Buffer[0] = 0xAA;
+                        Send_Buffer[1] = Receive_Buffer[1];
+                        Send_Buffer[2] = Receive_Buffer[2];
                         break;
                     default:
                         break;

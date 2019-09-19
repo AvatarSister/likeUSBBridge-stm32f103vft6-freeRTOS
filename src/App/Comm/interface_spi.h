@@ -52,6 +52,8 @@ typedef enum
 int SPI_Read_BootId(uint8_t *pdata, int len);
 int SPI_WriteRegs(uint8_t addr, uint8_t *pSendBuff, int len);
 int SPI_ReadRegs(uint8_t addr, uint8_t *pReadBuff,int len);
+void SPI_WriteAndRead_Direct(uint8_t head, uint8_t *pSendData, uint8_t *pReadData, int len);
+
 
 void download_fw(void);
 
